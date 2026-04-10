@@ -92,7 +92,7 @@ const authAccessHarness = vi.hoisted(() => {
         revision,
         type: "clientRemoved",
         payload: {
-          sessionId: AuthSessionId.makeUnsafe(sessionId),
+          sessionId: AuthSessionId.make(sessionId),
         },
       });
       revision += 1;
@@ -119,13 +119,13 @@ vi.mock("../../environments/runtime", () => {
       id: "environment-local",
       label: "Local environment",
       source: "manual" as const,
-      environmentId: EnvironmentId.makeUnsafe("environment-local"),
+      environmentId: EnvironmentId.make("environment-local"),
       target: {
         httpBaseUrl: "http://localhost:3000",
         wsBaseUrl: "ws://localhost:3000",
       },
     },
-    environmentId: EnvironmentId.makeUnsafe("environment-local"),
+    environmentId: EnvironmentId.make("environment-local"),
     client: {
       server: {
         subscribeAuthAccess: (listener: Parameters<typeof authAccessHarness.subscribe>[0]) =>
@@ -171,7 +171,7 @@ vi.mock("../../environments/runtime", () => {
 function createBaseServerConfig(): ServerConfig {
   return {
     environment: {
-      environmentId: EnvironmentId.makeUnsafe("environment-local"),
+      environmentId: EnvironmentId.make("environment-local"),
       label: "Local environment",
       platform: { os: "darwin" as const, arch: "arm64" as const },
       serverVersion: "0.0.0-test",
@@ -245,7 +245,7 @@ function makeClientSession(input: {
       deviceType: "unknown",
       ...input.client,
     },
-    sessionId: AuthSessionId.makeUnsafe(input.sessionId),
+    sessionId: AuthSessionId.make(input.sessionId),
     issuedAt: makeUtc(input.issuedAt),
     expiresAt: makeUtc(input.expiresAt),
     lastConnectedAt:
@@ -282,6 +282,13 @@ const createDesktopBridgeStub = (overrides?: {
       wsBaseUrl: "ws://127.0.0.1:3773",
       bootstrapToken: "desktop-bootstrap-token",
     }),
+    getClientSettings: vi.fn().mockResolvedValue(null),
+    setClientSettings: vi.fn().mockResolvedValue(undefined),
+    getSavedEnvironmentRegistry: vi.fn().mockResolvedValue([]),
+    setSavedEnvironmentRegistry: vi.fn().mockResolvedValue(undefined),
+    getSavedEnvironmentSecret: vi.fn().mockResolvedValue(null),
+    setSavedEnvironmentSecret: vi.fn().mockResolvedValue(true),
+    removeSavedEnvironmentSecret: vi.fn().mockResolvedValue(undefined),
     getServerExposureState: vi.fn().mockResolvedValue(
       overrides?.serverExposureState ?? {
         mode: "local-only",
