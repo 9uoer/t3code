@@ -1,4 +1,6 @@
 import { Schema } from "effect";
+import { ExecutionEnvironmentDescriptor } from "./environment";
+import { ServerAuthDescriptor } from "./auth";
 import {
   IsoDateTime,
   NonNegativeInt,
@@ -72,13 +74,26 @@ export type ServerProvider = typeof ServerProvider.Type;
 export const ServerProviders = Schema.Array(ServerProvider);
 export type ServerProviders = typeof ServerProviders.Type;
 
+export const ServerObservability = Schema.Struct({
+  logsDirectoryPath: TrimmedNonEmptyString,
+  localTracingEnabled: Schema.Boolean,
+  otlpTracesUrl: Schema.optional(TrimmedNonEmptyString),
+  otlpTracesEnabled: Schema.Boolean,
+  otlpMetricsUrl: Schema.optional(TrimmedNonEmptyString),
+  otlpMetricsEnabled: Schema.Boolean,
+});
+export type ServerObservability = typeof ServerObservability.Type;
+
 export const ServerConfig = Schema.Struct({
+  environment: ExecutionEnvironmentDescriptor,
+  auth: ServerAuthDescriptor,
   cwd: TrimmedNonEmptyString,
   keybindingsConfigPath: TrimmedNonEmptyString,
   keybindings: ResolvedKeybindingsConfig,
   issues: ServerConfigIssues,
   providers: ServerProviders,
   availableEditors: Schema.Array(EditorId),
+  observability: ServerObservability,
   settings: ServerSettings,
 });
 export type ServerConfig = typeof ServerConfig.Type;
@@ -156,10 +171,12 @@ export type ServerConfigStreamEvent = typeof ServerConfigStreamEvent.Type;
 
 export const ServerLifecycleReadyPayload = Schema.Struct({
   at: IsoDateTime,
+  environment: ExecutionEnvironmentDescriptor,
 });
 export type ServerLifecycleReadyPayload = typeof ServerLifecycleReadyPayload.Type;
 
 export const ServerLifecycleWelcomePayload = Schema.Struct({
+  environment: ExecutionEnvironmentDescriptor,
   cwd: TrimmedNonEmptyString,
   projectName: TrimmedNonEmptyString,
   bootstrapProjectId: Schema.optional(ProjectId),

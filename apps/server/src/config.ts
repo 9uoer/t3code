@@ -25,10 +25,13 @@ export interface ServerDerivedPaths {
   readonly attachmentsDir: string;
   readonly logsDir: string;
   readonly serverLogPath: string;
+  readonly serverTracePath: string;
   readonly providerLogsDir: string;
   readonly providerEventLogPath: string;
   readonly terminalLogsDir: string;
   readonly anonymousIdPath: string;
+  readonly environmentIdPath: string;
+  readonly secretsDir: string;
 }
 
 /**
@@ -36,6 +39,15 @@ export interface ServerDerivedPaths {
  */
 export interface ServerConfigShape extends ServerDerivedPaths {
   readonly logLevel: LogLevel.LogLevel;
+  readonly traceMinLevel: LogLevel.LogLevel;
+  readonly traceTimingEnabled: boolean;
+  readonly traceBatchWindowMs: number;
+  readonly traceMaxBytes: number;
+  readonly traceMaxFiles: number;
+  readonly otlpTracesUrl: string | undefined;
+  readonly otlpMetricsUrl: string | undefined;
+  readonly otlpExportIntervalMs: number;
+  readonly otlpServiceName: string;
   readonly mode: RuntimeMode;
   readonly port: number;
   readonly host: string | undefined;
@@ -44,7 +56,7 @@ export interface ServerConfigShape extends ServerDerivedPaths {
   readonly staticDir: string | undefined;
   readonly devUrl: URL | undefined;
   readonly noBrowser: boolean;
-  readonly authToken: string | undefined;
+  readonly desktopBootstrapToken: string | undefined;
   readonly autoBootstrapProjectFromCwd: boolean;
   readonly logWebSocketEvents: boolean;
 }
@@ -68,10 +80,13 @@ export const deriveServerPaths = Effect.fn(function* (
     attachmentsDir,
     logsDir,
     serverLogPath: join(logsDir, "server.log"),
+    serverTracePath: join(logsDir, "server.trace.ndjson"),
     providerLogsDir,
     providerEventLogPath: join(providerLogsDir, "events.log"),
     terminalLogsDir: join(logsDir, "terminals"),
     anonymousIdPath: join(stateDir, "anonymous-id"),
+    environmentIdPath: join(stateDir, "environment-id"),
+    secretsDir: join(stateDir, "secrets"),
   };
 });
 
@@ -117,6 +132,15 @@ export class ServerConfig extends ServiceMap.Service<ServerConfig, ServerConfigS
 
         return {
           logLevel: "Error",
+          traceMinLevel: "Info",
+          traceTimingEnabled: true,
+          traceBatchWindowMs: 200,
+          traceMaxBytes: 10 * 1024 * 1024,
+          traceMaxFiles: 10,
+          otlpTracesUrl: undefined,
+          otlpMetricsUrl: undefined,
+          otlpExportIntervalMs: 10_000,
+          otlpServiceName: "t3-server",
           cwd,
           baseDir,
           ...derivedPaths,
@@ -125,7 +149,7 @@ export class ServerConfig extends ServiceMap.Service<ServerConfig, ServerConfigS
           logWebSocketEvents: false,
           port: 0,
           host: undefined,
-          authToken: undefined,
+          desktopBootstrapToken: undefined,
           staticDir: undefined,
           devUrl,
           noBrowser: false,

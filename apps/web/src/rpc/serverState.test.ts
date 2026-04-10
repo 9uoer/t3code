@@ -1,5 +1,6 @@
 import {
   DEFAULT_SERVER_SETTINGS,
+  EnvironmentId,
   ProjectId,
   ThreadId,
   type ServerConfig,
@@ -50,13 +51,39 @@ const defaultProviders: ReadonlyArray<ServerProvider> = [
   },
 ];
 
+const baseEnvironment = {
+  environmentId: EnvironmentId.makeUnsafe("environment-local"),
+  label: "Local environment",
+  platform: {
+    os: "darwin" as const,
+    arch: "arm64" as const,
+  },
+  serverVersion: "0.0.0-test",
+  capabilities: {
+    repositoryIdentity: true,
+  },
+};
+
 const baseServerConfig: ServerConfig = {
+  environment: baseEnvironment,
+  auth: {
+    policy: "loopback-browser",
+    bootstrapMethods: ["one-time-token"],
+    sessionMethods: ["browser-session-cookie", "bearer-session-token"],
+    sessionCookieName: "t3_session",
+  },
   cwd: "/tmp/workspace",
   keybindingsConfigPath: "/tmp/workspace/.config/keybindings.json",
   keybindings: [],
   issues: [],
   providers: defaultProviders,
   availableEditors: ["cursor"],
+  observability: {
+    logsDirectoryPath: "/tmp/workspace/.config/logs",
+    localTracingEnabled: true,
+    otlpTracesEnabled: false,
+    otlpMetricsEnabled: false,
+  },
   settings: DEFAULT_SERVER_SETTINGS,
 };
 
@@ -187,6 +214,7 @@ describe("serverState", () => {
       sequence: 1,
       type: "welcome",
       payload: {
+        environment: baseEnvironment,
         cwd: "/tmp/workspace",
         projectName: "t3-code",
         bootstrapProjectId: ProjectId.makeUnsafe("project-1"),
@@ -195,6 +223,7 @@ describe("serverState", () => {
     });
 
     expect(listener).toHaveBeenCalledWith({
+      environment: baseEnvironment,
       cwd: "/tmp/workspace",
       projectName: "t3-code",
       bootstrapProjectId: ProjectId.makeUnsafe("project-1"),
@@ -204,6 +233,7 @@ describe("serverState", () => {
     const lateListener = vi.fn();
     const unsubscribeLate = onWelcome(lateListener);
     expect(lateListener).toHaveBeenCalledWith({
+      environment: baseEnvironment,
       cwd: "/tmp/workspace",
       projectName: "t3-code",
       bootstrapProjectId: ProjectId.makeUnsafe("project-1"),
